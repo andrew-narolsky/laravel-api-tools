@@ -1,0 +1,21 @@
+  server_name mail.EXAMPLE.com;
+  auth_http_header X-Access-Key "kJ8YnFuJy5b6N5GL5KHJP38y";
+
+  proxy on;
+  proxy_pass_error_message on;
+
+  server {
+    listen     587;
+    protocol   smtp;
+    smtp_auth  login plain;
+    xclient    on;
+    auth_http  127.0.0.1:8095/api/v1/auth/smtp;
+  }
+
+  server {
+    listen     25;
+    protocol   smtp;
+    smtp_auth  none;
+    xclient    off;
+    auth_http  127.0.0.1:8095/api/v1/auth/default;
+  }

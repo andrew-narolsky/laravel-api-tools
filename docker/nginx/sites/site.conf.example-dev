@@ -1,0 +1,21 @@
+map $host $crmDomain {
+    default "staging.rootsystems.org";
+}
+
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server ipv6only=on;
+
+    # Redirect trailing slash
+    # rewrite ^/(.*)/$ /$1 permanent;
+
+    # Redirect adding slash
+    # if ($request_method = GET) {
+    #    rewrite ^([^.]*[^/])$ $1/ permanent;
+    # }
+
+    include /etc/nginx/sites-available/defaults/general.conf;
+}
+
+
+

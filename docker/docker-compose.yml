@@ -1,0 +1,93 @@
+version: '3.5'
+
+services:
+
+### Workspace Utilities Container ###########################
+
+    workspace:
+        build:
+            context: ./workspace
+            args:
+                - APP_ENV=${APP_ENV}
+                - USER_ID=${WORKSPACE_PUID}
+                - GROUP_ID=${WORKSPACE_PGID}
+                - CHROME_DRIVER_VERSION=${WORKSPACE_CHROME_DRIVER_VERSION}
+        restart: unless-stopped
+        volumes:
+            - ../:/var/www:cached
+            - ./workspace/php.ini:/usr/local/etc/php/conf.d/php.ini
+            - ./workspace/laravel.ini:/usr/local/etc/php/conf.d/laravel.ini
+            - ./workspace/mysql.ini:/usr/local/etc/php/conf.d/mysql.ini
+            - ./workspace/supervisord.conf:/etc/supervisord.conf
+            - ./workspace/supervisord.d:/etc/supervisord.d
+        container_name: ${PROJECT_NAME}-workspace
+        expose:
+            - "9000"
+        dns:
+            - 8.8.4.4
+            - 8.8.8.8
+        tty: true
+        environment:
+            - PHP_IDE_CONFIG=${PHP_IDE_CONFIG}
+        networks:
+            - app-network
+
+### Nginx Server Container ##################################
+
+    nginx:
+        image: xpert13/nginx:v.1.5
+        restart: unless-stopped
+        volumes:
+            - ../:/var/www:cached
+            - ${NGINX_CONF_DIR}:/etc/nginx/conf.d
+            - ./logs/nginx/:/var/log/nginx
+            - ./nginx/sites/:/etc/nginx/sites-available
+        container_name: ${PROJECT_NAME}-nginx
+        ports:
+            - "80:80"
+            - "443:443"
+            - "587:587"
+            - "25:25"
+        networks:
+            - app-network
+
+### MariaDB Container #######################################
+
+    mariadb:
+      image: xpert13/mariadb:v.1.1
+      restart: unless-stopped
+      volumes:
+        - ${DATA_SAVE_PATH}/mariadb:/var/lib/mysql
+      container_name: ${PROJECT_NAME}-mariadb
+      ports:
+        - "${MARIADB_PORT}:3306"
+      environment:
+        - MYSQL_DATABASE=${MARIADB_DATABASE}
+        - MYSQL_USER=${MARIADB_USER}
+        - MYSQL_PASSWORD=${MARIADB_PASSWORD}
+        - MYSQL_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      networks:
+        - app-network
+
+### Memcached Container #####################################
+
+    memcached:
+      image: memcached:latest
+      restart: unless-stopped
+      container_name: ${PROJECT_NAME}-memcached
+      ports:
+        - "11211:11211"
+      networks:
+        - app-network
+
+### Networks Setup ############################################
+
+networks:
+    app-network:
+        driver: "bridge"
+
+### Volumes Setup #############################################
+
+volumes:
+  mariadb:
+    driver: "local"
